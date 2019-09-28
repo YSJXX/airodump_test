@@ -1,9 +1,23 @@
+#include <pcap.h>
+#include <map>
+
+
+#define SAME_MAC 6
+
 #ifndef HEADER_GRUOP_H
 #define HEADER_GRUOP_H
 
 #endif // HEADER_GRUOP_H
-#include <pcap.h>
 
+#pragma once
+
+
+
+
+
+struct uint48{
+    unsigned long long v:48;
+}__attribute__((packed));           // and push pop
 
 struct ieee80211_radiotap_header {
     u_int8_t it_version;
@@ -22,9 +36,24 @@ struct ieee80211_radiotap_header {
 struct ieee80211_beacon_frame{
     u_int16_t j_Frame_control;
     u_int16_t j_Duration;
-    u_int8_t j_Destination_address[6];
-    u_int8_t j_Source_address[6];
-    u_int8_t j_BSSID[6];
+    uint48 j_Destination_address;
+    uint48 j_Source_address;
+    uint48 j_BSSID;
     u_int16_t j_SequenceControl;
+};
+
+struct data_map{
+    u_int8_t j_BSSID[6];
+    u_int8_t it_Antennasignal;
+    u_int8_t beacons=3;
+    u_int8_t sharp_data;
+    u_int8_t sharp_s;
+    u_int8_t channel;
+    u_int8_t MB;
+    u_int8_t encrypt;
+    u_int8_t cipher;
+    u_int8_t auth;
+    u_int8_t ESSID;
+
 };
 

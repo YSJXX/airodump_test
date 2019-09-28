@@ -1,36 +1,62 @@
 #include <stdio.h>
+#include <iostream>
 #include <pcap.h>
 #include <arpa/inet.h> // ntohs
 #include <time.h>      // 시간 입력
 #include <stdlib.h>     // system, strtol
 #include <unistd.h>     //sleepr
+#include <map>          //map
 #include "header_gruop.h"
+using namespace std;
 
-
-
-void beacons(const u_char * packet)
+void bssid(const u_char * packet)
 {
     struct ieee80211_radiotap_header *radiotap_header= (struct ieee80211_radiotap_header *)packet;
     struct ieee80211_beacon_frame * beacon_header = (struct ieee80211_beacon_frame *)(packet + radiotap_header->it_len);
 
 
-}
+
+    std::map<int,struct data_map > m;
+    struct data_map data;
 
 
+    int check=0;
+    int key;
+    m[key] = data;
+    auto it = m.begin();
 
-void mac(const u_char * packet)
-{
-    struct ieee80211_radiotap_header *radiotap_header= (struct ieee80211_radiotap_header *)packet;
-    struct ieee80211_beacon_frame * beacon_header = (struct ieee80211_beacon_frame *)(packet + radiotap_header->it_len);
-    for(int i=0; i<6; ++i)
+
+    for(int i=0;i<6;++i) if(beacon_header->j_Source_address[i] == data.j_BSSID[i]) ++check;
+    //value 찾는 코드 다시 짜야함 위에 코드.
+    if(SAME_MAC != check)       // 새로운 mac 추가
     {
+        for(int i=0; i<6;++i)
+        {
+            //(*it).second.j_BSSID[i] = beacon_header->j_Source_address[i] ;
+            data.j_BSSID[i] = beacon_header->j_Source_address[i];
+        }
 
-        if(i<5)
-            printf("%02x:",beacon_header->j_Source_address[i]);
-        else
-            printf("%02x",beacon_header->j_Source_address[i]);
-
+        for(int i=0; i<6; ++i)
+        {
+            if(i<5)
+                printf("%02x:",data.j_BSSID[i]);
+            else
+                printf("%02x", data.j_BSSID[i]);
+        }
     }
+    else {
+        //++(*it).second.beacons;
+        //++data.beacons;
+        std::cout<<"################################TESTING"<<'\n';
+    }
+
+
+
+
+
+    printf("  %3d ",(char)radiotap_header->it_Antennasignal);
+    //printf("        %3d ",(*it).second.beacons);
+    printf("        %3d ",data.beacons);
 
 
 }
@@ -43,9 +69,11 @@ void beacon_frame(const u_char* packet)
     struct ieee80211_radiotap_header * radiotap = (struct ieee80211_radiotap_header *)packet;
     struct ieee80211_beacon_frame * beacon_header = (struct ieee80211_beacon_frame *)(packet + radiotap->it_len);
 
+
+
     time_t t=time(nullptr);
     struct tm *tm =localtime(&t);
-    system("clear");
+    // system("clear");
 
     //--------- Chennal
 
@@ -62,9 +90,8 @@ void beacon_frame(const u_char* packet)
     printf("BSSID               PWR     Beacons     #Data,   #/s  CH   MB   ENC   CIPHER   AUTH     ESSID\n");
     printf("--------------------------------------------------------------------------------------------\n");
     printf("A*:11:11:11:11:11   %d         %d        %d     %d  %d   %d    %d       %d     %d   JBU_CCIT\n",32,321,12,21,21,21,21,12,21);
-    mac(packet);
-    printf("  %d ",(char)radiotap->it_Antennasignal);
-    beacons(packet);
+    bssid(packet);
+
     printf("\n");
 
 
@@ -80,15 +107,32 @@ void beacon_frame(const u_char* packet)
 
 int main(int argc, char* argv[])
 {
+
     if (argc > 1) printf("error\n");
 
     char errbuf[PCAP_ERRBUF_SIZE];      //size 256
     const char *dev = argv[1];
-    pcap_t* handle = pcap_open_live("wlan0",BUFSIZ,1,100,errbuf);
+    pcap_t* handle = pcap_open_live("wlan1",BUFSIZ,1,100,errbuf);
     if(handle == nullptr )
     {
-        printf("찾을 수 없습니다.\n");
-        return -1;
+        // for(int i=0; i<10; ++i)
+        //{
+        printf("Search Wlan0...\n");
+
+        system("ifconfig wlan0 down");
+        system("iwconfig wlan0 mode monitor");
+        system("ifconfig wlan0 up");
+
+        //  if(handle != nullptr)
+        //      break;
+
+        //  if(i==9)
+        //      printf("찾을 수 없습니다.\n");
+        //      return -1;
+        //}
+
+
+
     }
 
     while(1)
@@ -117,13 +161,12 @@ int main(int argc, char* argv[])
 
         //printf("%x\n",ntohs(beacon_header->j_Frame_control));
 
-
-
-
         if(ntohs(beacon_header->j_Frame_control) == 0x8000)
         {
+            printf("####TEST MAC :: %llx \n",beacon_header->j_BSSID);
+
             //printf("Beacon Check Code :: %x\n",ntohs(beacon_header->j_Frame_control));
-            beacon_frame(packet);
+            //beacon_frame(packet);
         }
 
 
