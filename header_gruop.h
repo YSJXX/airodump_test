@@ -57,3 +57,16 @@ struct data_map{
 
 };
 
+struct ieee80211_wireless_lan
+{
+    struct fixed_parameters{
+        u_int64_t timestamp;
+        u_int16_t beacon_interval;
+        u_int16_t capabilities_info;
+    };
+    struct tag_parameters{
+        u_int8_t tag_number;
+        u_int8_t tag_length;
+        u_int8_t SSID[];
+    };
+};

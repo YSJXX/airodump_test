@@ -6,8 +6,11 @@
 #include <stdlib.h>     // system, strtol
 #include <unistd.h>     //sleepr
 #include <map>          //map
+
 #include "header_gruop.h"
 using namespace std;
+
+
 
 void bssid(const u_char * packet)
 {
@@ -16,40 +19,23 @@ void bssid(const u_char * packet)
 
 
 
-    std::map<int,struct data_map > m;
+    std::map<uint48,data_map > m;
     struct data_map data;
+    //printf("%llx ",beacon_header->j_BSSID);
 
-
-    int check=0;
-    int key;
-    m[key] = data;
-    auto it = m.begin();
-
-
-    for(int i=0;i<6;++i) if(beacon_header->j_Source_address[i] == data.j_BSSID[i]) ++check;
-    //value 찾는 코드 다시 짜야함 위에 코드.
-    if(SAME_MAC != check)       // 새로운 mac 추가
+    /*
+    //auto it = m.begin();
+    if(m.find(beacon_header->j_BSSID) == m.end() )     // key 있지 않으면.
     {
-        for(int i=0; i<6;++i)
-        {
-            //(*it).second.j_BSSID[i] = beacon_header->j_Source_address[i] ;
-            data.j_BSSID[i] = beacon_header->j_Source_address[i];
-        }
-
-        for(int i=0; i<6; ++i)
-        {
-            if(i<5)
-                printf("%02x:",data.j_BSSID[i]);
-            else
-                printf("%02x", data.j_BSSID[i]);
-        }
+        m.insert(map<uint48,data_map>::value_type(beacon_header->j_BSSID,data));
+        //m[beacon_header->j_BSSID] = data;
     }
     else {
         //++(*it).second.beacons;
-        //++data.beacons;
+        ++data.beacons;
         std::cout<<"################################TESTING"<<'\n';
     }
-
+    */
 
 
 
@@ -68,7 +54,7 @@ void beacon_frame(const u_char* packet)
 {
     struct ieee80211_radiotap_header * radiotap = (struct ieee80211_radiotap_header *)packet;
     struct ieee80211_beacon_frame * beacon_header = (struct ieee80211_beacon_frame *)(packet + radiotap->it_len);
-
+    struct ieee80211_wireless_lan * wire_data = (struct ieee80211_wireless_lan *)(packet + radiotap->it_len +20);
 
 
     time_t t=time(nullptr);
@@ -82,15 +68,15 @@ void beacon_frame(const u_char* packet)
 
     printf("CH: %d || [%d.%d.%d %d:%d ]\n",(radiotap->it_channelfrequency - 2412)/5+1,tm->tm_year+1900,tm->tm_mon+1,tm->tm_mday,tm->tm_hour,tm->tm_min);
 
-
-
     //printf("경과시간 : %d \n",tm->);
     //sleep(3);
 
     printf("BSSID               PWR     Beacons     #Data,   #/s  CH   MB   ENC   CIPHER   AUTH     ESSID\n");
     printf("--------------------------------------------------------------------------------------------\n");
     printf("A*:11:11:11:11:11   %d         %d        %d     %d  %d   %d    %d       %d     %d   JBU_CCIT\n",32,321,12,21,21,21,21,12,21);
-    bssid(packet);
+    //bssid(packet);
+
+
 
     printf("\n");
 
@@ -163,10 +149,8 @@ int main(int argc, char* argv[])
 
         if(ntohs(beacon_header->j_Frame_control) == 0x8000)
         {
-            printf("####TEST MAC :: %llx \n",beacon_header->j_BSSID);
-
             //printf("Beacon Check Code :: %x\n",ntohs(beacon_header->j_Frame_control));
-            //beacon_frame(packet);
+            beacon_frame(packet);
         }
 
 
