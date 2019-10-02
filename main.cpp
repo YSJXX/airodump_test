@@ -20,31 +20,40 @@ void bssid(const u_char * packet)
 
 
     std::map<uint48,data_map > m;
-    struct data_map data;
-    //printf("%llx ",beacon_header->j_BSSID);
+    map<uint48,data_map>::iterator it;
 
-    /*
-    //auto it = m.begin();
-    if(m.find(beacon_header->j_BSSID) == m.end() )     // key 있지 않으면.
-    {
-        m.insert(map<uint48,data_map>::value_type(beacon_header->j_BSSID,data));
-        //m[beacon_header->j_BSSID] = data;
-    }
-    else {
-        //++(*it).second.beacons;
+    struct data_map data;
+
+
+
+    m.insert(std::make_pair(beacon_header->j_BSSID,data));
+    data.it_Antennasignal = radiotap_header->it_Antennasignal;
+
+    if(m.find(beacon_header->j_BSSID)!=m.end())
         ++data.beacons;
+
+
+    for(it = m.begin();it!=m.end();++it)
+    {
+        printf("  %llx ",it->first);
+        printf("  %3d ",(char)radiotap_header->it_Antennasignal);
+        //printf("  %3d ",it->second.it_Antennasignal);
+        printf("  %3d ",it->second.beacons);
+    }
+
+
+    // iterator key
+    if(it != m.end())  {
+        ++((*it).second.beacons);
+        //++data.beacons;
         std::cout<<"################################TESTING"<<'\n';
     }
-    */
 
 
 
-
-    printf("  %3d ",(char)radiotap_header->it_Antennasignal);
+    //printf("  %3d ",(char)radiotap_header->it_Antennasignal);
     //printf("        %3d ",(*it).second.beacons);
-    printf("        %3d ",data.beacons);
-
-
+    //printf("        %3d ",(*it).second.beacons);
 }
 
 
@@ -74,7 +83,7 @@ void beacon_frame(const u_char* packet)
     printf("BSSID               PWR     Beacons     #Data,   #/s  CH   MB   ENC   CIPHER   AUTH     ESSID\n");
     printf("--------------------------------------------------------------------------------------------\n");
     printf("A*:11:11:11:11:11   %d         %d        %d     %d  %d   %d    %d       %d     %d   JBU_CCIT\n",32,321,12,21,21,21,21,12,21);
-    //bssid(packet);
+    bssid(packet);
 
 
 

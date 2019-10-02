@@ -19,6 +19,11 @@ struct uint48{
     unsigned long long v:48;
 }__attribute__((packed));           // and push pop
 
+bool operator<(uint48 const& n1, uint48 const& n2)
+{
+    return n1.v < n2.v || (n1.v == n2.v);
+}
+
 struct ieee80211_radiotap_header {
     u_int8_t it_version;
     u_int8_t it_pad;
@@ -45,7 +50,7 @@ struct ieee80211_beacon_frame{
 struct data_map{
     u_int8_t j_BSSID[6];
     u_int8_t it_Antennasignal;
-    u_int8_t beacons=3;
+    u_int8_t beacons=0;
     u_int8_t sharp_data;
     u_int8_t sharp_s;
     u_int8_t channel;
