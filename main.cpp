@@ -6,11 +6,13 @@
 #include <stdlib.h>     // system, strtol
 #include <unistd.h>     //sleepr
 #include <map>          //map
-
+#include <cstring>     //memcpy
 #include "header_gruop.h"
+
 using namespace std;
 
-
+static std::map<uint48,data_map > m;
+static map<uint48,data_map>::iterator it;
 
 void bssid(const u_char * packet)
 {
@@ -18,36 +20,33 @@ void bssid(const u_char * packet)
     struct ieee80211_beacon_frame * beacon_header = (struct ieee80211_beacon_frame *)(packet + radiotap_header->it_len);
 
 
-
-    std::map<uint48,data_map > m;
-    map<uint48,data_map>::iterator it;
-
     struct data_map data;
 
 
 
     m.insert(std::make_pair(beacon_header->j_BSSID,data));
-    data.it_Antennasignal = radiotap_header->it_Antennasignal;
+    //data.it_Antennasignal = radiotap_header->it_Antennasignal;
 
-    if(m.find(beacon_header->j_BSSID)!=m.end())
-        ++data.beacons;
-
+    it = m.find(beacon_header->j_BSSID);
+    if(it !=m.end())
+    {
+        it->second.beacons ++;
+        //printf("Find Mac");
+    }
 
     for(it = m.begin();it!=m.end();++it)
     {
-        printf("  %llx ",it->first);
-        printf("  %3d ",(char)radiotap_header->it_Antennasignal);
-        //printf("  %3d ",it->second.it_Antennasignal);
-        printf("  %3d ",it->second.beacons);
+        printf("%17llx ",it->first);
+        //printf("  %3d ",radiotap_header->it_Antennasignal);
+        memcpy(&data.it_Antennasignal,&radiotap_header->it_Antennasignal,sizeof(radiotap_header->it_Antennasignal));
+        printf("%5d ",it->second.it_Antennasignal);
+
+        printf("%8d ", it->second.beacons);
+        printf("\n");
     }
 
 
-    // iterator key
-    if(it != m.end())  {
-        ++((*it).second.beacons);
-        //++data.beacons;
-        std::cout<<"################################TESTING"<<'\n';
-    }
+
 
 
 
@@ -68,7 +67,7 @@ void beacon_frame(const u_char* packet)
 
     time_t t=time(nullptr);
     struct tm *tm =localtime(&t);
-    // system("clear");
+    system("clear");
 
     //--------- Chennal
 
@@ -82,7 +81,7 @@ void beacon_frame(const u_char* packet)
 
     printf("BSSID               PWR     Beacons     #Data,   #/s  CH   MB   ENC   CIPHER   AUTH     ESSID\n");
     printf("--------------------------------------------------------------------------------------------\n");
-    printf("A*:11:11:11:11:11   %d         %d        %d     %d  %d   %d    %d       %d     %d   JBU_CCIT\n",32,321,12,21,21,21,21,12,21);
+    printf("A8:11:11:11:11:11   %d         %d        %d     %d  %d   %d    %d       %d     %d   JBU_CCIT\n",32,321,12,21,21,21,21,12,21);
     bssid(packet);
 
 
