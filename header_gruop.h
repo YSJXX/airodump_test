@@ -32,7 +32,7 @@ struct ieee80211_radiotap_header {
     u_int8_t it_dataRate;
     u_int16_t it_channelfrequency;
     u_int16_t it_channelflags;
-    u_int8_t it_Antennasignal;
+    int8_t it_Antennasignal;
     u_int8_t it_Antenna;
     u_int16_t it_Rxflags;
 };
@@ -47,9 +47,9 @@ struct ieee80211_beacon_frame{
 };
 
 struct data_map{
-    u_int8_t j_BSSID[6];
-    u_int8_t it_Antennasignal;
-    u_int8_t beacons;
+    //u_int8_t j_BSSID[6];
+    int8_t it_Antennasignal;
+    u_int8_t beacons=1;
     u_int8_t sharp_data;
     u_int8_t sharp_s;
     u_int8_t channel;

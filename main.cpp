@@ -11,52 +11,32 @@
 
 using namespace std;
 
+static struct data_map data;
 static std::map<uint48,data_map > m;
 static map<uint48,data_map>::iterator it;
 
-void bssid(const u_char * packet)
+
+void mac(uint48 mac_addr)
 {
-    struct ieee80211_radiotap_header *radiotap_header= (struct ieee80211_radiotap_header *)packet;
-    struct ieee80211_beacon_frame * beacon_header = (struct ieee80211_beacon_frame *)(packet + radiotap_header->it_len);
+    //uint8_t temp[6];
+    //temp[0]= mac_addr;
+    //u_int8_t*p=(u_int8_t*)&mac_addr;
+    u_int8_t *ptr = reinterpret_cast<u_int8_t*>(&mac_addr);
+    printf("%02x:%02x:%02x:%02x:%02x:%02x ",ptr[0],ptr[1],ptr[2],ptr[3],ptr[4],ptr[5]);
+}
 
-
-    struct data_map data;
-
-
-
-    m.insert(std::make_pair(beacon_header->j_BSSID,data));
-    //data.it_Antennasignal = radiotap_header->it_Antennasignal;
-
-    it = m.find(beacon_header->j_BSSID);
-    if(it !=m.end())
+void printf_p()
+{
+    for(auto it = m.begin(); it!=m.end(); ++it)
     {
-        it->second.beacons ++;
-        //printf("Find Mac");
-    }
-
-    for(it = m.begin();it!=m.end();++it)
-    {
-        printf("%17llx ",it->first);
-        //printf("  %3d ",radiotap_header->it_Antennasignal);
-        memcpy(&data.it_Antennasignal,&radiotap_header->it_Antennasignal,sizeof(radiotap_header->it_Antennasignal));
+        mac(it->first);
+        //printf("%5d ",radiotap->it_Antennasignal);
         printf("%5d ",it->second.it_Antennasignal);
-
-        printf("%8d ", it->second.beacons);
+        printf("%10d ", it->second.beacons);
         printf("\n");
     }
 
-
-
-
-
-
-    //printf("  %3d ",(char)radiotap_header->it_Antennasignal);
-    //printf("        %3d ",(*it).second.beacons);
-    //printf("        %3d ",(*it).second.beacons);
 }
-
-
-
 
 void beacon_frame(const u_char* packet)
 {
@@ -81,17 +61,26 @@ void beacon_frame(const u_char* packet)
 
     printf("BSSID               PWR     Beacons     #Data,   #/s  CH   MB   ENC   CIPHER   AUTH     ESSID\n");
     printf("--------------------------------------------------------------------------------------------\n");
-    printf("A8:11:11:11:11:11   %d         %d        %d     %d  %d   %d    %d       %d     %d   JBU_CCIT\n",32,321,12,21,21,21,21,12,21);
-    bssid(packet);
 
+    map<uint48,data_map>::iterator iter;
 
-
-    printf("\n");
-
-
-    sleep(1);
-
-
+    if(m.count(beacon_header->j_BSSID))
+    {
+        iter = m.find(beacon_header->j_BSSID);
+        //printf("TEST2************************\n");
+        memcpy(&iter->second.it_Antennasignal,&radiotap->it_Antennasignal,1);
+        iter->second.beacons ++;
+        printf_p();
+        //sleep(1);
+    }
+    else
+    {
+        m.insert(std::make_pair(beacon_header->j_BSSID,data));
+        memcpy(&it->second.it_Antennasignal,&radiotap->it_Antennasignal,1);
+        printf_p();
+        it++;
+        //sleep(1);
+    }
 }
 
 
@@ -106,7 +95,7 @@ int main(int argc, char* argv[])
 
     char errbuf[PCAP_ERRBUF_SIZE];      //size 256
     const char *dev = argv[1];
-    pcap_t* handle = pcap_open_live("wlan1",BUFSIZ,1,100,errbuf);
+    pcap_t* handle = pcap_open_live("wlan0",BUFSIZ,1,100,errbuf);
     if(handle == nullptr )
     {
         // for(int i=0; i<10; ++i)
@@ -129,6 +118,11 @@ int main(int argc, char* argv[])
 
     }
 
+
+    it=m.begin();
+
+
+
     while(1)
     {
         struct pcap_pkthdr* header;
@@ -138,6 +132,8 @@ int main(int argc, char* argv[])
         if(res ==-1 || res == -2) break;
         struct ieee80211_radiotap_header *radiotap_header= (struct ieee80211_radiotap_header *)packet;
         struct ieee80211_beacon_frame * beacon_header = (struct ieee80211_beacon_frame *)(packet + radiotap_header->it_len);
+
+
         //struct ieee80211_beacon_frame * beacon_header = (struct ieee80211_beacon_frame *)(packet + 18);
 
         //printf("Radio tap first :: %x\n",radiotap_header->it_version);
@@ -159,12 +155,9 @@ int main(int argc, char* argv[])
         {
             //printf("Beacon Check Code :: %x\n",ntohs(beacon_header->j_Frame_control));
             beacon_frame(packet);
+
         }
-
-
     }
-
-
 
     return 0;
 }
