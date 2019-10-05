@@ -119,10 +119,9 @@ int main(int argc, char* argv[])
     }
 
 
-    it=m.begin();
 
 
-
+    int x=0;
     while(1)
     {
         struct pcap_pkthdr* header;
@@ -153,7 +152,13 @@ int main(int argc, char* argv[])
 
         if(ntohs(beacon_header->j_Frame_control) == 0x8000)
         {
-            //printf("Beacon Check Code :: %x\n",ntohs(beacon_header->j_Frame_control));
+
+            if( x == 0)
+            {
+                m.insert(std::make_pair(beacon_header->j_BSSID,data));
+                it=m.begin();
+            }
+                //printf("Beacon Check Code :: %x\n",ntohs(beacon_header->j_Frame_control));
             beacon_frame(packet);
 
         }

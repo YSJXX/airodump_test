@@ -69,8 +69,10 @@ struct ieee80211_wireless_lan
         u_int16_t capabilities_info;
     };
     struct tag_parameters{
-        u_int8_t tag_number;
-        u_int8_t tag_length;
-        u_int8_t SSID[];
+        struct tag_ssid{
+            u_int8_t tag_number;
+            u_int8_t tag_length;
+            u_int8_t *SSID;
+        };
     };
 };
