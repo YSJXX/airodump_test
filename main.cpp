@@ -8,15 +8,12 @@
 #include <unistd.h>     //sleepr
 #include <map>          //map
 #include <cstring>     //memcpy
-
-
 #include "header_gruop.h"
 
 using namespace std;
 
 static struct data_map data;
 static std::map<uint48,data_map > m;
-//static map<uint48,data_map>::iterator it;
 
 void mac(uint48 mac_addr)
 {
@@ -26,8 +23,12 @@ void mac(uint48 mac_addr)
 
 void *display (void* a)
 {
+    time_t t = time(nullptr);
+    struct tm tm = *localtime(&t);
     while(true)
     {
+
+        printf("CH: 3 || %d-%d-%d %d:%d \n",tm.tm_year+1900,tm.tm_mon,tm.tm_mday,tm.tm_hour,tm.tm_min);
         printf("BSSID               PWR     Beacons  CH  MB  ENC  CIPHER  AUTH   ESSID\n");
         printf("----------------------------------------------------------------------\n");
         for(auto it = m.begin(); it!=m.end(); ++it)

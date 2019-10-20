@@ -9,9 +9,7 @@
 #define CCMP 11
 #define MGT 12
 #define PSK 13
-#define OPN 14
-#define WPA 15
-#define WPA2 16
+
 
 #ifndef HEADER_GRUOP_H
 #define HEADER_GRUOP_H
@@ -67,7 +65,6 @@ struct data_map{
     u_int8_t cipher;
     u_int8_t auth;
     char ESSID[32];
-
 };
 
 struct tag_ssid{
