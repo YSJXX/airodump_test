@@ -65,10 +65,8 @@ void *display (void* a)
 
             printf("\n");
         }
-
         sleep(1);
         system("clear");
-
     }
 
 }
