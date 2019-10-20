@@ -8,7 +8,5 @@ LIBS += -lpthread
 SOURCES += \
         main.cpp
 
-
-
 HEADERS += \
     header_gruop.h

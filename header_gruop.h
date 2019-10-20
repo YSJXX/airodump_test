@@ -1,7 +1,8 @@
-#include <pcap.h>
+﻿#include <pcap.h>
 #include <map>
 #include <cstring>
 #include <string>
+#include <iostream>
 
 #define SAME_MAC 6
 
@@ -12,16 +13,18 @@
 
 #pragma once
 
-
 struct uint48{
     unsigned long long v:48;
 }__attribute__((packed));           // and push pop
-
+//!(n1.v<n2.v) && !(n1.v>n2.v)
 bool operator<(uint48 const& n1, uint48 const& n2)
 {
-    return n1.v < n2.v || (n1.v > n2.v);
+    return n1.v < n2.v;
 }
-
+bool operator>(uint48 const& n1, uint48 const& n2)
+{
+    return n1.v > n2.v;
+}
 
 struct ieee80211_radiotap_header {
     u_int8_t it_version;
@@ -47,32 +50,34 @@ struct ieee80211_beacon_frame{
 };
 
 struct data_map{
-    //u_int8_t j_BSSID[6];
     int8_t it_Antennasignal;
     u_int8_t beacons=1;
     u_int8_t sharp_data;
     u_int8_t sharp_s;
-    u_int8_t channel;
+    u_int16_t channel;
     u_int8_t MB;
     u_int8_t encrypt;
     u_int8_t cipher;
     u_int8_t auth;
-    u_int8_t ESSID;
+    char ESSID[32];
 
 };
 
-struct ieee80211_wireless_lan
-{
-    struct fixed_parameters{
-        u_int64_t timestamp;
-        u_int16_t beacon_interval;
-        u_int16_t capabilities_info;
-    };
-    struct tag_parameters{
-        struct tag_ssid{
-            u_int8_t tag_number;
-            u_int8_t tag_length;
-            u_int8_t *SSID;
-        };
-    };
+struct tag_ssid{
+    u_int8_t tag_number;
+    u_int8_t tag_length;
+    char SSID[32];
+};
+
+struct rsn_info{
+    u_int8_t tag_number;
+    u_int8_t tag_length;
+    u_int8_t rsn_version;
+    u_int32_t group_cipher_Suite;
+    u_int8_t pairwise_cipher_suite_count;
+};
+
+struct rsn_info1{
+    u_int8_t pairwise_cipher_oui[3];
+    u_int8_t pairwise_cipher_type;
 };
