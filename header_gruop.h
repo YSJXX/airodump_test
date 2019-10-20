@@ -5,6 +5,13 @@
 #include <iostream>
 
 #define SAME_MAC 6
+#define TKIP 10
+#define CCMP 11
+#define MGT 12
+#define PSK 13
+#define OPN 14
+#define WPA 15
+#define WPA2 16
 
 #ifndef HEADER_GRUOP_H
 #define HEADER_GRUOP_H
@@ -69,15 +76,6 @@ struct tag_ssid{
     char SSID[32];
 };
 
-struct rsn_info{
-    u_int8_t tag_number;
-    u_int8_t tag_length;
-    u_int8_t rsn_version;
-    u_int32_t group_cipher_Suite;
-    u_int8_t pairwise_cipher_suite_count;
-};
-
-struct rsn_info1{
-    u_int8_t pairwise_cipher_oui[3];
-    u_int8_t pairwise_cipher_type;
+struct thread_data{
+    pcap_t *handle;
 };

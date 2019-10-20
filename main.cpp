@@ -28,22 +28,43 @@ void *display (void* a)
 {
     while(true)
     {
-        printf("BSSID               PWR     Beacons  #Data, #/s  CH  MB  ENC  CIPHER  AUTH   ESSID\n");
-        printf("-------------------------------------------------------------------------------------\n");
+        printf("BSSID               PWR     Beacons  CH  MB  ENC  CIPHER  AUTH   ESSID\n");
+        printf("----------------------------------------------------------------------\n");
         for(auto it = m.begin(); it!=m.end(); ++it)
         {
             mac(it->first);
             printf("%5d ",it->second.it_Antennasignal);
             printf("%10d ",it->second.beacons);
-            printf("%15d ",it->second.channel);
-            printf("                ");
-            for(int i=0;i<20;i++)//it->second.ESSID[i]=='\0'
+            printf("%4d ",it->second.channel);
+            if(it->second.cipher==CCMP)
             {
-                //printf("TEST\n");
-                printf("%c",it->second.ESSID[i]);
+                printf("    WPA2");
+                printf("    CCMP");
             }
+            else if(it->second.cipher==TKIP)
+            {
+                printf("    WPA");
+                printf("    TKIP");
+            }
+            else
+            {
+                printf("     OPN");
+                printf("        ");
+            }
+
+            if(it->second.auth==PSK)
+                printf("  PSK  ");
+            else if(it->second.auth==MGT)
+                printf("  MGT  ");
+            else
+                printf("       ");
+
+            for(int i=0;i<32;i++)
+                printf("%c",it->second.ESSID[i]);
+
             printf("\n");
         }
+
         sleep(1);
         system("clear");
 
@@ -51,10 +72,12 @@ void *display (void* a)
 
 }
 
-void *save_data (void* arg)
+void *save_data (void * arg )
 {
     char errbuf[PCAP_ERRBUF_SIZE];      //size 256
     pcap_t* handle = pcap_open_live("wlan1",BUFSIZ,1,100,errbuf);
+    //struct thread_data * data =(struct thread_data *)arg;             //?
+    //pcap_t *handle = data->handle;
     while(true)
     {
         struct pcap_pkthdr* header;
@@ -72,74 +95,6 @@ void *save_data (void* arg)
 
         if(ntohs(beacon_header->j_Frame_control) == 0x8000)
         {
-            int a=0;
-            while(true)
-            {
-                //printf("%x\n",*(point));
-                if(*(point) == 0x30)                //RSN number
-                {
-                    printf("TEST3333333333333333 |%x|\n",*(point+8));
-                    if(*(point+8)==0x02)          //pairwise suite count : 1
-                    {
-                        a=4;
-                        printf("11111111111111111111TEST\n");
-                        sleep(5);
-                    }
-                    //printf("TEST2222 |%x|\n",*(point+12+a));
-                    switch(*(point+13+a))         //Cipher_Suite_type :
-                    {
-                    case 1:
-                    {
-                        printf("WEP-40\n");
-                        break;
-                    }
-                    case 2:
-                    {
-                        printf("TKIP\n");
-                        break;
-                    }
-                    case 4:
-                    {
-                        printf("CCMP\n");
-                        break;
-                    }
-                    default:
-                    {
-                        printf(" x \n");
-                        break;
-                    }
-
-                    }
-                    printf("AKM: %x\n",*(point+16+a));
-                    switch(*(point+16+a))         //AKM type:
-                    {
-                    case 1:
-                    {
-                        printf("MGT\n");
-                        break;
-                    }
-                    case 2:
-                    {
-                        printf("PSK\n");
-                        break;
-                    }
-                    default:
-                    {
-                        printf(" x \n");
-                        break;
-                    }
-                    }
-
-                    printf("------------\n");
-                    break;
-                }
-                point += *(point+1)+2;        //tag length 만큼 더하기.
-                if(*(point)=='\0')         // not found
-                {
-                    printf("OPN\n");
-                    break;
-                }
-            }
 
             m.insert(std::make_pair(beacon_header->j_BSSID,data));      // 없다면 추가 있으면 아무것도 하지 않음.
             uint16_t channel = ((radiotap_header->it_channelfrequency-2412)/5+1);
@@ -154,6 +109,55 @@ void *save_data (void* arg)
                 memcpy(&iter->second.channel,&channel,1);
                 ++iter->second.beacons;
 
+                int a=0;
+                while(true)
+                {
+                    if(*(point) == 0x30)                //RSN number
+                    {
+                        if(*(point+8)==0x02)          //pairwise suite count : 1
+                            a=4;
+
+                        switch(*(point+13+a))         //Cipher_Suite_type :
+                        {
+                        case 2:
+                        {
+                            iter->second.cipher=TKIP;
+                            break;
+                        }
+                        case 4:
+                        {
+                            iter->second.cipher=CCMP;
+                            break;
+                        }
+                        default:
+                            break;
+
+
+                        }
+
+                        switch(*(point+19+a))         //AKM type:
+                        {
+                        case 1:
+                        {
+                            iter->second.auth=MGT;
+                            break;
+                        }
+                        case 2:
+                        {
+                            iter->second.auth=PSK;
+                            break;
+                        }
+                        default:
+                            break;
+
+                        }
+
+                        break;
+                    }
+                    point += *(point+1)+2;        //point+1 = tag length 만큼 더하기. 2:number , length
+                    if(*(point)=='\0')         // not found
+                        break;
+                }
 
             }
         }
@@ -171,28 +175,33 @@ int main(int argc, char* argv[])
     pcap_t* handle = pcap_open_live("wlan1",BUFSIZ,1,100,errbuf);
     if(handle == nullptr )
     {
-        // for(int i=0; i<10; ++i)
-        //{
-        printf("Search Wlan0...\n");
+        int i=0;
+        while(i<=5)
+        {
+            printf("Search Wlan0...\n");
 
-        system("ifconfig wlan0 down");
-        system("iwconfig wlan0 mode monitor");
-        system("ifconfig wlan0 up");
+            system("ifconfig wlan0 down");
+            system("iwconfig wlan0 mode monitor");
+            system("ifconfig wlan0 up");
 
-        //  if(handle != nullptr)
-        //      break;
+            if(handle != nullptr)
+                break;
 
-        //  if(i==9)
-        //      printf("찾을 수 없습니다.\n");
-        //      return -1;
-        //}
+            i++;
+        }
+        if(i==5)
+        {
+            printf("찾을 수 없습니다.\n");
+            return -1;
+        }
     }
 
     printf("------| 종료 : 1 |-----\n");
     pthread_t display_thread,back_thread;
-
-    //pthread_create(&display_thread,nullptr,display,nullptr);
-    pthread_create(&back_thread,nullptr,save_data,nullptr);
+    struct thread_data * data=static_cast<thread_data *>(malloc(sizeof (thread_data)));
+    data->handle=handle;
+    pthread_create(&display_thread,nullptr,display,nullptr);
+    pthread_create(&back_thread,nullptr,save_data,static_cast<void*>(data));
     int x=0;
     while(true)
     {
