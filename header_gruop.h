@@ -9,9 +9,7 @@
 #define CCMP 11
 #define MGT 12
 #define PSK 13
-#define OPN 14
-#define WPA 15
-#define WPA2 16
+
 
 #ifndef HEADER_GRUOP_H
 #define HEADER_GRUOP_H
